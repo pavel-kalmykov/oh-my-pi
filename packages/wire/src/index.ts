@@ -321,6 +321,14 @@ export type CollabUiRequestDraft =
 			kind: "editor";
 			title: string;
 			prefill?: string;
+	  }
+	| {
+			kind: "custom-dialog";
+			title: string;
+			/** Pre-rendered monospace rows, ANSI SGR escapes allowed. */
+			rows: string[];
+			options: CollabUiSelectItem[];
+			initialIndex?: number;
 	  };
 
 export type CollabUiRequest = CollabUiRequestDraft & { reqId: number };

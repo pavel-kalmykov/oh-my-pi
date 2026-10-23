@@ -1337,6 +1337,34 @@ export class ExtensionUiController {
 					return;
 				}
 				component = c;
+				const mirror = (c as { collabDialog?: () => unknown }).collabDialog?.();
+				const raceGuest = (guest: CollabHost) => {
+					const dialog = mirror as {
+						title: string;
+						rows: string[];
+						options: Array<string | { label: string; description?: string }>;
+						initialIndex?: number;
+						mapAnswer: (label: string | undefined) => T;
+					};
+					const guestAbort = new AbortController();
+					promise.finally(() => guestAbort.abort());
+					const remote = guest.requestGuestUi(
+						{
+							kind: "custom-dialog",
+							title: dialog.title,
+							rows: dialog.rows,
+							options: dialog.options,
+							initialIndex: dialog.initialIndex,
+						},
+						guestAbort.signal,
+						{ retainOnReconnect: true },
+					);
+					remote?.then(result => {
+						if (result.kind === "answered" && !closed) close(dialog.mapAnswer(result.value));
+					});
+				};
+				const host = this.ctx.collabHost;
+				if (mirror && typeof mirror === "object" && "rows" in mirror && host) raceGuest(host);
 				if (options?.overlay) {
 					const overlayOptions =
 						typeof options.overlayOptions === "function" ? options.overlayOptions() : options.overlayOptions;

@@ -823,7 +823,16 @@ export class CollabGuestLink {
 						markableCount: request.markableCount,
 						helpText: request.helpText,
 					})
-				: this.#ctx.showHookEditor(request.title, request.prefill, { signal: abort.signal });
+				: request.kind === "custom-dialog"
+					? this.#ctx.showHookSelector(request.title, request.options, {
+							signal: abort.signal,
+							initialIndex: request.initialIndex,
+							helpText: request.rows
+								.map(row => row.replace(/\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\))/g, ""))
+								.join(" | ")
+								.slice(0, 300),
+						})
+					: this.#ctx.showHookEditor(request.title, request.prefill, { signal: abort.signal });
 		dialog
 			.then(value => {
 				// Identity check: only the presentation that still owns the reqId

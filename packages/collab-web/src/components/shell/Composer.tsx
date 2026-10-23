@@ -4,6 +4,7 @@ import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { memo, useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { ConnectionPhase, GuestClient } from "../../lib/client";
 
+import { renderAnsiRow } from "../../lib/ansi";
 export interface ComposerProps {
 	client: GuestClient;
 	phase: ConnectionPhase;
@@ -157,7 +158,36 @@ export const Composer = memo(function Composer({
 		return (
 			<div className="sh-composer sh-composer-ask">
 				<div className="sh-ask-title">{uiRequest.title}</div>
-				{uiRequest.kind === "select" ? (
+				{uiRequest.kind === "custom-dialog" ? (
+					<div className="sh-ask-custom">
+						<pre className="sh-ask-rows">
+							{uiRequest.rows.map((row, index) => (
+								<div key={`${uiRequest.reqId}-${index}`}>{renderAnsiRow(row)}</div>
+							))}
+						</pre>
+						<div className="sh-ask-options">
+							{uiRequest.options.map((option, index) => {
+								const label = typeof option === "string" ? option : option.label;
+								return (
+									<button
+										key={`${uiRequest.reqId}-${index}-${label}`}
+										type="button"
+										className={`sh-ask-option${index === (uiRequest.initialIndex ?? 0) ? " sh-ask-option-checked" : ""}`}
+										onClick={() => client.sendUiResponse(uiRequest.reqId, label)}
+									>
+										<span className="sh-ask-option-marker">{index === (uiRequest.initialIndex ?? 0) ? "◉" : "○"}</span>
+										<span className="sh-ask-option-copy">
+											<span className="sh-ask-option-label">{label}</span>
+											{typeof option !== "string" && option.description && (
+												<span className="sh-ask-option-description">{option.description}</span>
+											)}
+										</span>
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				) : uiRequest.kind === "select" ? (
 					<div className="sh-ask-options">
 						{uiRequest.options.map((option, index) => {
 							const label = typeof option === "string" ? option : option.label;
